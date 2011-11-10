@@ -8,11 +8,11 @@ BIN = /usr/bin
 # xymon reports hst
 BB_HOST = 158.38.60.214
 # noc mail address
-NOC = sip-drift@uninett.no
+NOC = sip-monitoring@uninett.no
 
 # SIP port for REGISTER
 REGISTER_PORT = 6050
-# SIP prot sipp testing
+# SIP port sipp testing
 SIP_PORT = 5065 
 # SIP RTP media port start
 MEDIA_PORT = 16400
