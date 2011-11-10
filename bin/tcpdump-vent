@@ -1,0 +1,14 @@
+#!/bin/bash
+
+vent=$1
+
+shift
+
+echo /usr/sbin/tcpdump $* >> tcpdump.log
+/usr/sbin/tcpdump $* 2>&1 >> tcpdump.log &
+
+sleep $vent
+
+kill %1
+
+exit 0

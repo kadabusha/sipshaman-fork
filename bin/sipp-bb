@@ -1,0 +1,21 @@
+#!/bin/bash
+# make qstream statistics from sipp-test logs
+# - listen to updates on the task.log file
+
+. /etc/sipshaman/sipshaman.cf
+
+y=`date +%Y`
+m=`date +%m`
+d=`date +%d`
+h=`date +%H`
+
+ydir=$DATA/$y
+mdir=$ydir/$m
+ddir=$mdir/$d
+hdir=$ddir/$h
+
+cd $hdir
+
+ $BIN/qstream-sipp-check $* -bb $BB_HOST -f -die 59 task.log
+
+

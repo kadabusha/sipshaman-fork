@@ -1,0 +1,7 @@
+# Sippmon is a scripts collection for monitoring of quality of sip services
+# where the monitoring data is
+DATADIR = /var/local/sippmon
+#  config
+CONFDIR = /local/net-status/sipp/etc
+# scripts
+BINDIR = /local/net-status/sipp/bin

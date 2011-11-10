@@ -1,0 +1,51 @@
+#!/usr/bin/perl
+# parse and print variable from sipp .csv report-files 
+
+require "newgetopt.pl";
+$usage="$0 -f field1|file2|... file.csv...
+-q quiet - less info
+-all - list all lines";
+@opts=('f=s', 'q', 'all', 'id=s');
+&NGetOpt(@opts) || die $usage;
+if ($opt_f){
+    $fields=$opt_f;
+} else {
+    $fields = 'OutgoingCall(C)|FailedCall(C)|Retransmissions(C)|ResponseTime1(C)|ResponseTime1StDev(C)|CallLength(C)|CallLengthStDev(C)';
+}
+$fields =~ s/\(/\\(/g;
+$fields =~ s/\)/\\)/g;
+
+
+
+foreach $file (@ARGV){
+    open CSV, "<$file" || die "Could not open $file";
+
+    if (! defined($head) ) { # first heading
+	$head=<>; # top line with headerfields
+	@h=split(/;/, $head);
+
+	foreach $fno (0 .. $#h){ # find matching headings
+	    if ($h[$fno] =~ $fields){
+		push(@fno, $fno);
+		printf "%20s ", $h[$fno] if ! $opt_q;
+	    } 
+	}	
+	print " File name\n\n" if ! $opt_q;
+    } else {
+	$head=<>;
+    }
+
+    while(<CSV>){ # read data lines
+	next if /$h[0]/; # heading
+
+	@f= split(/;/);
+	$line="";
+	foreach $fno (@fno){
+	    $line.=sprintf "%20s ", $f[$fno];
+	}
+#	next if  $line =~ /^[\s0;:]+$/;  # zero stats
+	printf "$line  %s\n", $opt_id || $file if $opt_all or eof(CSV);
+    }
+#xs	printf "$line  %s\n", $opt_id || $file; # last line is final status
+
+}

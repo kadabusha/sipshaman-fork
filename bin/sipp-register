@@ -1,0 +1,45 @@
+#!/bin/sh 
+
+# register sipp user 
+# 
+
+. /etc/sipshaman/sipshaman.cf
+
+registrar=`/sbin/ifconfig eth0| perl -ne 'print $1 if /inet addr:(\d+\.\d+\.\d+\.\d+)/'`
+interf=$registrar
+
+if test .$1 = .-h; then
+  echo Usage__: $0 "[registrar [announed-interface]]"
+  echo Default: $0 $registrar $interf
+  exit 1
+fi
+
+if test $# -gt 0; then
+   registrar=$1
+   shift
+fi
+if test $# -gt 0; then
+   interf=$1
+   shift
+fi
+
+y=`date +%Y`
+m=`date +%m`
+d=`date +%d`
+h=`date +%H`
+t1=`date +%s`
+
+
+ydir=$DATA/$y
+test -d $ydir || mkdir $ydir
+mdir=$ydir/$m
+test -d $mdir || mkdir $mdir
+ddir=$mdir/$d
+test -d $ddir || mkdir $ddir
+hdir=$ddir/$h
+test -d $hdir || mkdir $hdir
+
+cd $hdir
+
+$BIN/sipp $registrar -s sipp -i $interf -p $REGISTER_PORT -l 1 -m 1 -sf $CONF/register.xml -trace_err -trace_msg -inf $CONF/register-name.txt -bg
+

@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="ISO-8859-1" ?>
+<!DOCTYPE scenario SYSTEM "sipp.dtd">
+
+<scenario name="registration">
+	
+<send retrans="500">
+<![CDATA[
+REGISTER sip:[field1] SIP/2.0
+Via: SIP/2.0/[transport] [local_ip]:[local_port];branch=[branch]
+Max-Forwards: 20
+From: "olav" <sip:[field0]@[field1]>;tag=[call_number]
+To: "olav" <sip:[field0]@[field1]>
+Call-ID: [call_id]
+CSeq: 1 REGISTER
+Contact: <sip:sipp@[local_ip]:5065>
+Expires: 3000
+Content-Length: 0
+User-Agent: SIPp v3.1-PCAP, version svn590M
+]]>
+</send>
+
+<recv response="100" optional="true">
+</recv>
+<recv response="401" auth="true" rtd="true">
+</recv>
+	
+<send retrans="500">
+<![CDATA[
+REGISTER sip:[field1] SIP/2.0
+Via: SIP/2.0/[transport] [local_ip]:[local_port];branch=[branch]
+Max-Forwards: 20
+From: "olav" <sip:[field0]@[field1]>;tag=[call_number]
+To: "olav" <sip:[field0]@[field1]>
+Call-ID: reg///[call_id]
+CSeq: 2 REGISTER
+Contact: <sip:[field0]@[local_ip]:5065>
+Expires: 4000
+Content-Length: 0
+User-Agent: SIPp v3.1-PCAP, version svn590M
+[field2]
+]]>
+</send>
+
+<recv response="100" optional="true" >
+</recv>	
+<recv response="200">
+</recv>
+
+<ResponseTimeRepartition value="10, 20"/>
+<CallLengthRepartition value="10"/>
+	
+</scenario>

@@ -1,0 +1,66 @@
+#!/bin/bash
+
+# start a sipp responder that waits for a test call
+# sipp exits for each and logs data in a directory per hour 
+# and exits withinafter an hour
+
+. /etc/sipshaman/sipshaman.cf
+
+registrar=`/sbin/ifconfig eth0| perl -ne 'print $1 if /inet addr:(\d+\.\d+\.\d+\.\d+)/'`
+interf=$registrar
+
+if test .$1 = .-h; then
+  echo Usage__: $0 "[registrar [announed-interface]]"
+  echo Default: $0 $registrar $interf
+  exit 1
+fi
+
+if test $# -gt 0; then
+   registrar=$1
+   shift
+fi
+if test $# -gt 0; then
+   interf=$1
+   shift
+fi
+
+  while test 1=1 ; do
+    ps axw | grep -q "$BIN/[s]ipp $registrar" -
+
+    if test $? = 1 ; then # not found
+	y=`date +%Y`
+	m=`date +%m`
+	d=`date +%d`
+	h=`date +%H`
+	t1=`date +%s`
+
+
+	ydir=$DATA/$y
+	test -d $ydir || mkdir $ydir
+	mdir=$ydir/$m
+	test -d $mdir || mkdir $mdir
+	ddir=$mdir/$d
+	test -d $ddir || mkdir $ddir
+	hdir=$ddir/$h
+	test -d $hdir || mkdir $hdir
+
+	cd $hdir
+	port=$SIP_PORT
+        mport=16388
+
+	$BIN/sipp $registrar:5062 -s sipp -i $interf -p $port -mp $mport -l 1 -m 1 -sf $CONF/sipp-responder.xml -trace_stat -trace_logs -trace_err -trace_msg -rp 600000 -r 1 -bg -nofork 2>> sipp.err >> sipp.log &
+
+	pid=$!
+	echo $y-$m-$d `date +%T` $pid $port $mport sipp@$interf iPBX `hostname --fqdn` 0 >> task.log
+	t2=`date +%s`
+	dt=$(($t2-$t1))
+	if test $dt -lt 5; then #
+	    echo  #### too short interval $dt | mail -s sipp-responder oak@uninett.no
+	    exit 1
+	fi
+
+    fi
+
+    sleep 3
+
+  done

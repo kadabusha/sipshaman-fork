@@ -1,0 +1,191 @@
+#!/usr/bin/perl
+#
+# process sip log files from sipp-responder and sipp-test and report to Xymon
+# the task.log file gives meta-info
+
+use XML::Simple;
+use Data::Dumper;
+use Socket;
+use IO::Select;
+require "newgetopt.pl";
+
+@opts=( 'f', 'die=s', 'timeout=s', 'bb=s', 'remote', 'debug', 'dump', 'v', 'h', 'help' );
+
+my $usage="Usage $0 [-debug] [-die mins] [-remote] [-f]
+-bb <hostname> - XYMON/BB host to receive reports
+-remote - this is remote sipp (not used)
+-f - wait for results like tail -f
+-die <minutes> - end after <minutes>
+";
+my $rc=&NGetOpt(@opts);
+die $usage if not $rc or $opt_h or $opt_help;
+
+my $bb_host = $opt_bb   || `hostname -f`; 
+
+$mos_limit=[0,3.2,3.9]; # mos values
+$bb_color=["red", "yellow", "green"];
+$call_limit=[0,70,90]; # call succes in percent
+
+# check results from sipp-initated calls with tcpdumps in sipp-test
+
+$tmp="/tmp/qstream-sipp-$$.xml";
+
+my $endooflife=0;
+
+if ($opt_die){
+    $endoflife=time+$opt_die*60;
+}
+
+
+my $timeout= $opt_timeout || 1; # wait n seconds for file too be updated
+
+foreach $tasklog(@ARGV){
+    
+    open TASKLOG, "<$tasklog" || die "Could not open $tasklog : $!";
+
+    while( 1 ){ # read task.log
+
+#	while(eof(TASKLOG)){  # wait for next line to file
+#	    exit(1) if $opt_die && (time > $endoflife); 
+#	    last if !$opt_f;
+#	    sleep $timeout;
+#	    next; # wait for more data
+#	}
+	
+	exit(1) if $opt_die && (time > $endoflife); 
+
+	if (! ($line=<TASKLOG>)){   # could not read the line
+	    exit(1) if $opt_die && (time > $endoflife); 
+	    last if !$opt_f;
+            sleep $timeout;  
+            next;	
+        }
+	next if $line !~ /[\d-]+ [\d:]+ \d+ \d+/; # invalid line/empty ..Format : date time port port 
+
+	my ($date, $time, $pid, $sip_port, $rtp_port, $id, $function, $machine, $rtt)=split(/\s+/, $line);
+	
+#	sleep 300; #  minutes to be sure that the forked processes are dead
+	# active=1 test $active -gt 0
+	until (system("ps -p $pid > /dev/null")){  # wait until process finished
+	    sleep $timeout;
+	}
+	
+	$src=$id; $src=~ s/.*@//;
+	$machine=$src if !$machine ne '';
+	$machine=~s/:\d+$//;
+	if ($machine=~ /^\d+\.\d+/){ # lookup hostname
+	    my $iaddr=inet_aton($machine);
+	    $machine= gethostbyaddr($iaddr, AF_INET);
+	}
+	$machine=~s/\./,/g;
+
+	my $mossum=0, $n=0;
+	my @f=`ls rtp_*${pid}_*.pcap* 2>/dev/null`; 
+	my $qstream_rep='';
+
+	if($#f >=0){ # yess some files
+	    chomp(@f);
+	    my $rtp_files= join(' ', @f);
+	    $cmd="/local/net-status/bin/qstream.pl -v  -rtp -rtt  '$rtt' -id $src -xml $tmp $rtp_files";
+
+	    $qstream_rep='date +%T $pid $port $mport $service@$server   $function $machine ping' . $_;
+	    open QSTREAM, "$cmd|";
+	    while(<QSTREAM>){ $qstream_rep.=$_}
+	    close QSTREAM;
+
+	    # system($cmd); # || die "command failed : $cmd : $!";
+	    $xml = XMLin($tmp) || die "Could not analyze XML $tmp : $!";
+	    print Dumper($xml) if $opt_dump;
+	    
+	    my @flow=();
+	    if (ref($xml->{flow}) eq "ARRAY"){
+		@flow= @{$xml->{flow}};
+	    } else { # just one
+		@flow=($xml->{flow});
+	    }
+	    $min_mos=10;
+	    foreach $flow (@flow){
+		my $mos= $flow->{network_stats}->{MOS};
+		$mossum += $mos;
+		$n++;      
+		$min_mos=$mos if  ($mos < $min_mos) ;
+	    }
+	}
+	if ($n >0){
+	    my $mean_mos=$mossum/$n;
+	    &bb_report("M-$function", $machine, &bb_color($mos_limit,$bb_color,$min_mos), 
+		       sprintf "$date $time - %.1f \n%s\n",$min_mos,$qstream_rep);
+	    
+	} else {
+	    &bb_report("M-$function", $machine, &bb_color($mos_limit,$bb_color,0), "No RTP files");
+	}
+	
+	my $log='';
+# checking call success
+
+	if ($opt_remote){
+	    if ($n > 0){
+		$status=100;
+		$message="Call received successfully";
+	    } else {
+		$status=0;
+		$message="No calls received\n";
+	    }
+	    &bb_report("C-$function", $machine, &bb_color($call_limit,$bb_color,$status), $message);
+	} else {
+
+	    open (CSV, "/local/net-status/sipp/bin/sipp-print  -f 'OutgoingCall(C)|SuccessfulCall(C)|FailedCall(C)|Retransmissions(C)|ResponseTime1(C)|ResponseTime1StDev(C)|CallLength(C)|CallLengthStDev(C)'  *${pid}_.csv|");
+	    while(<CSV>){
+		$log.=$_;
+		if (/^\s+\d+\s+\d+\s+/){
+		    my ($callsout, $success, $failed, $rest)=split;
+		    if ($success>0){
+			$calls=$success+$failed;
+			$status=100*$success/$calls; # success rate in %
+			$message=sprintf "$date $time - %d percent success (%d/%d)\n%s",$status,$success,$calls,$log;
+		    } else {
+			$status=0;
+			$message="No successfull calls :\n $log";
+		    }
+		    &bb_report("C-$function", $machine, &bb_color($call_limit,$bb_color,$status), $message);
+		}
+	    }
+	    close CSV;
+	}
+		   
+	
+    }
+    close TASKLOG;
+}
+
+#  /local/net-status/sipp/bin/sipp-print -id $src -q -f 'OutgoingCall(C)|SuccessfulCall(C)|FailedCall(C)|Retransmissions(C)|ResponseTime1(C)|ResponseTime1StDev(C)|CallLength(C)|CallLengthStDev(C)'  *${pid}_.csv
+
+
+
+unlink ($tmp);
+exit(0);
+
+sub bb_color {
+    my ($limit, $color, $value)=@_;
+
+    for ($i=$#$limit;$i>=$[;$i--){
+	if ( $value >= @$limit[$i]){ 
+	    return @$color[$i];
+	}
+	
+    }
+
+}
+
+sub bb_report {
+    my ($bbtest, $machine, $color, $msg)=@_;
+#    my $cmd="/usr/lib/hobbit/client/bin/bb $bb_host 'status $machine.$bbtest $color $msg\n'>>$ENV{HOME}/cmd.log 2>&1";
+    my $cmd="/usr/lib/hobbit/client/bin/bb $bb_host 'status $machine.$bbtest $color $msg\n'";
+#    system($cmd)|| warn "Command failed : $cmd : $!";
+    my @cmd=("/usr/lib/hobbit/client/bin/bb", "$bb_host", "status $machine.$bbtest $color $msg\n");
+    system(@cmd); # || warn "Command failed : $cmd : $!";
+    print $cmd, "\n" if $opt_v;
+
+}
+
+

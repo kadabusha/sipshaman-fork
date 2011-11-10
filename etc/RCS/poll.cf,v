@@ -1,0 +1,33 @@
+head	1.1;
+access;
+symbols;
+locks
+	oak:1.1; strict;
+comment	@# @;
+
+
+1.1
+date	2009.03.03.14.27.50;	author oak;	state Exp;
+branches;
+next	;
+
+
+desc
+@@
+
+
+1.1
+log
+@Initial revision
+@
+text
+@#SEQUENTIAL
+# targets for sipp performance monitoring
+# server service
+# phoenix.uninett.no;plain_echo
+bo-sip.hit.no;plain_echo
+sip.hia.no;plain_echo
+sip.hiof.no;plain_echo
+sip.uninett.no;plain_echo
+# sip.uit.no;plain_echo
+# sip.uio.no;plain_echo@
