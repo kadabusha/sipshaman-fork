@@ -2,7 +2,7 @@
 # start responder if not running
 . /etc/sipshaman/sipshaman.cf
 
-ps axw | grep -q "sh .*/local/net-status/sipp/bin/sipp-responde[r]" -
+ps axw | grep -q "sh .*/usr/bin/sipp-responde[r]" -
 if test $? -eq 1; then # not found and ok to run
   $BIN/sipp-responder&
 fi

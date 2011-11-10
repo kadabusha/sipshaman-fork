@@ -86,7 +86,7 @@ foreach $tasklog(@ARGV){
 	if($#f >=0){ # yess some files
 	    chomp(@f);
 	    my $rtp_files= join(' ', @f);
-	    $cmd="/local/net-status/bin/qstream.pl -v  -rtp -rtt  '$rtt' -id $src -xml $tmp $rtp_files";
+	    $cmd="/usr/bin/qstream -v  -rtp -rtt  '$rtt' -id $src -xml $tmp $rtp_files";
 
 	    $qstream_rep='date +%T $pid $port $mport $service@$server   $function $machine ping' . $_;
 	    open QSTREAM, "$cmd|";
@@ -134,7 +134,7 @@ foreach $tasklog(@ARGV){
 	    &bb_report("C-$function", $machine, &bb_color($call_limit,$bb_color,$status), $message);
 	} else {
 
-	    open (CSV, "/local/net-status/sipp/bin/sipp-print  -f 'OutgoingCall(C)|SuccessfulCall(C)|FailedCall(C)|Retransmissions(C)|ResponseTime1(C)|ResponseTime1StDev(C)|CallLength(C)|CallLengthStDev(C)'  *${pid}_.csv|");
+	    open (CSV, "/usr/bin/sipp-print  -f 'OutgoingCall(C)|SuccessfulCall(C)|FailedCall(C)|Retransmissions(C)|ResponseTime1(C)|ResponseTime1StDev(C)|CallLength(C)|CallLengthStDev(C)'  *${pid}_.csv|");
 	    while(<CSV>){
 		$log.=$_;
 		if (/^\s+\d+\s+\d+\s+/){
@@ -158,7 +158,7 @@ foreach $tasklog(@ARGV){
     close TASKLOG;
 }
 
-#  /local/net-status/sipp/bin/sipp-print -id $src -q -f 'OutgoingCall(C)|SuccessfulCall(C)|FailedCall(C)|Retransmissions(C)|ResponseTime1(C)|ResponseTime1StDev(C)|CallLength(C)|CallLengthStDev(C)'  *${pid}_.csv
+#  /usr/bin/sipp-print -id $src -q -f 'OutgoingCall(C)|SuccessfulCall(C)|FailedCall(C)|Retransmissions(C)|ResponseTime1(C)|ResponseTime1StDev(C)|CallLength(C)|CallLengthStDev(C)'  *${pid}_.csv
 
 
 

@@ -142,7 +142,7 @@
   <nop>
     <action>
      <exec command="tcpdump-vent 10 -i eth0 -q -s 0 -w rtp_[local_ip]_[pid]_[call_number].pcap dst host [local_ip] and dst port [$my_media_port] and src host [$rtp_ip] and src port [$rtp_port]"/>
-     <exec play_pcap_audio="/etc/sippshaman/pcap/g711a.pcap"/>
+     <exec play_pcap_audio="/etc/sipshaman/pcap/g711a.pcap"/>
     </action>
   </nop>
 

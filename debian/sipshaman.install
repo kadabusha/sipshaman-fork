@@ -1,0 +1,16 @@
+bin/sipp-register	usr/bin
+bin/qstream-sipp-check	usr/bin
+bin/sipp-bb		usr/bin
+bin/tcpdump-vent	usr/bin
+bin/sipp-print		usr/bin
+bin/sipp-test		usr/bin
+bin/sipp-start-responder	usr/bin
+bin/sipp-responder	usr/bin
+etc/register.xml	etc/sipshaman
+etc/poll.cf		etc/sipshaman
+etc/sipp-client-media.xml	etc/sipshaman
+etc/sipp-test.cron	etc/cron.d
+etc/sipp-responder.xml	etc/sipshaman
+etc/sipshaman.cf	etc/sipshaman
+pcap/dtmf_2833_1.pcap	etc/sipshaman/pcap
+pcap/g711a.pcap		etc/sipshaman/pcap

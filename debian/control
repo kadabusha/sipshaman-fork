@@ -1,0 +1,11 @@
+Source: sipshaman
+Section: unknown
+Priority: optional
+Maintainer: Jon K Hellan <jon.kare.hellan@uninett.no>
+Build-Depends: debhelper (>= 4.0.0)
+Standards-Version: 3.9.1
+
+Package: sipshaman
+Architecture: all
+Description: Streaming media quality measurement tool
+Depends: ${misc:Depends}, ${perl:Depends}, perl-modules, libxml-simple-perl, tcpdump, qstream, hobbit-client, net-tools, iputils-ping
