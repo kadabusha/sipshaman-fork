@@ -9,7 +9,6 @@ bin/sipp-responder	usr/bin
 etc/register.xml	etc/sipshaman
 etc/poll.cf		etc/sipshaman
 etc/sipp-client-media.xml	etc/sipshaman
-etc/sipp-test.cron	etc/cron.d
 etc/sipp-responder.xml	etc/sipshaman
 etc/sipshaman.cf	etc/sipshaman
 pcap/dtmf_2833_1.pcap	etc/sipshaman/pcap
