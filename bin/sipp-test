@@ -1,13 +1,12 @@
 #!/bin/bash
 
-# run a series of sipp-tests and store the logs
-
-. /etc/sipshaman/sipshaman.cf
+source /etc/sipshaman/sipshaman.cf
 
 y=`date +%Y`
 m=`date +%m`
 d=`date +%d`
 h=`date +%H`
+
 
 ydir=$DATA/$y
 test -d $ydir || mkdir $ydir
@@ -18,27 +17,42 @@ test -d $ddir || mkdir $ddir
 hdir=$ddir/$h
 test -d $hdir || mkdir $hdir
 
-
 cd $hdir
+
 
 port=$SIP_PORT   # sip service port start
 mport=$MEDIA_PORT # rtp service port start
 export IFS=";"
 
-addr=`/sbin/ifconfig eth0 | perl -ne 'print $1 if /inet addr:(\d+\.\d+\.\d+\.\d+)/'`
+addr=`/sbin/ifconfig eth0| perl -ne 'print $1 if /inet addr:(\d+\.\d+\.\d+\.\d+)/'`
 
-while read server service rest; do
+while read server service outproxy function machine calls; do
+    if test -z "$server"; then
+	continue
+    fi
+    if test -z "$outproxy"; then
+	outproxy="outgoing-proxy-missing"	
+    fi
+    if test -z "$calls" ; then
+	calls=1
+    fi
 
   echo $server | egrep -q '^\s*#'
   if test $? = 1 ; then # no comment
-      $BIN/sipp $server -s $service -i $addr -sf $CONF/sipp-client.xml -p $port -mp $mport -m 10 -rp 200000 -l 1 -trace_stat  -fd 99999 -trace_logs -trace_msg -trace_err -bg >/dev/null 2>&1 &
+      /usr/bin/sipp $server -s $service -i $addr -sf $CONF/sipp-client-media.xml -p $port -mp $mport -m $calls -rp 200000 -l 1 -trace_stat  -fd 99999 -trace_logs -trace_msg -trace_err -bg -nofork -rsa $outproxy 2>> sipp.err >> sipp.log &
       pid=$!
       adr=$service@$server
-      echo $y-$m-$d `date +%T` $pid $port $mport $service@$server `ping -c 10 -i 0.5 -q $server | awk -F / '/^rtt /{print $5}'`>> task.log
+      server_ip=`echo $server| sed -e 's/:.*//'`
+#      echo server_ip $server_ip
+      echo $y-$m-$d `date +%T` $pid $port $mport $service@$server   $function $machine `ping -c 10 -i 0.5 -q $server_ip | awk -F / '/^rtt /{print $5}'`>> task.log
       time=$y-$m-$d-$h
+#      perl -e "dbmopen(%tests, 'sip-test.dbm',0622); \$tests\{$time,$pid\}=$adr;dbmclose(%tests)"
 
       port=$(($port+2))
       mport=$(($mport+4))
+      sleep 3
   fi
 done
+
+
 

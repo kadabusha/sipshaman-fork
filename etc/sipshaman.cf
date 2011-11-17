@@ -1,19 +1,19 @@
 # Sippmon is a scripts collection for monitoring of quality of sip services
 # where the monitoring data is
-DATA = /var/log/sipshaman
+DATA=/var/log/sipshaman
 #  config
-CONF = /etc/sipshaman
+CONF=/etc/sipshaman
 # scripts
-BIN = /usr/bin
+BIN=/usr/bin
 # xymon reports hst
-BB_HOST = 158.38.60.214
+BB_HOST=158.38.60.214
 # noc mail address
-NOC = sip-monitoring@uninett.no
+NOC=sip-monitoring@uninett.no
 
 # SIP port for REGISTER
-REGISTER_PORT = 6050
+REGISTER_PORT=6050
 # SIP port sipp testing
-SIP_PORT = 5065 
+SIP_PORT=5065 
 # SIP RTP media port start
-MEDIA_PORT = 16400
+MEDIA_PORT=16400
 
