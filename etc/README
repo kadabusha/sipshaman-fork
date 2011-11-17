@@ -2,25 +2,21 @@ Description (ref https://ow.feide.no/sip:sipp).
 
 Sipp is a tool for systematic generation of SIP-calls, and is used to generate automated calls to each of the pilot echo-points to measure availability, call setup time and audio streaming quality. 
 
-We have developed a test scenario for Sipp (sipp-client-media.xml) that sets up a call to an echo service. It transmits a prerecorded sound clip and captures the returning RTP traffic with tcpdump. 
+We have developed a test scenario for Sipp (sipp-client-media.xml) that sets up a call to an echo service. It transmits a prerecorded sound clip and captures the returning RTP traffic with tcpdump. We also made responder.xml on the receiver side that transmits
+a recorded sound back.
 
 Qstream analyzes RTP streams to measure the quality, like lost packets, resequencing and jitter. 
 
-Tests are being run a configurable number of  successive calls each about 8 seconds every 10 minutes. The results are put into Stager for aggregation and reports (Or on the top Stager page - in the header select report setup = qstream, then for report type select SIP, then create report). 
+Tests are being run a configurable number of  successive calls each about 8 seconds every n minutes. The results are put into Stager for aggregation and reports (Or on the top Stager page - in the header select report setup = qstream, then for report type select SIP, then create report). 
 
 We have patched Sipp to support systematic repeated calls (auto_media_port) and storing the logs(-trace_dir). 
 
 Minor scripts developed are 
 sipp-test(shell script) to run the tests.
 sipp-print(perl) - to print sipp .csv -files nicely
+sipp-bb - analyze logs and report status to Xymon(BB)
 getData.php - to take qstream reports to Stager(stager/bin/)
 
-More information is found in /local/net-status/sipp/etc/README A list of echo services is in sipp/etc/poll.cf and data in sipp/data.
-
-Files :
-
-sipp-print   - pretty print  from .csv reports
-sipp-test    - shell to start tests based on poll.cf
 qstream-sipp - shell to report results from tests - input to stager
 
 /etc/sipshaman :
@@ -29,8 +25,21 @@ README 	.
 poll.cf  - listing echo services to call
 sipp-test.cfon - cron entry for /etc/cron.d
 
-/usr/local/bin/tcpdump-vent  - script for running tcpdump to catch rtp-streams(setuid root)
-/usr/local/bin/sipp - the sipp program - probably need setuid root
+tcpdump-vent  - script for running tcpdump to catch rtp-streams(setuid root)
+sipp - the sipp program - probably don't need setuid root
+
+Installation :
+
+cat > /etc/apt/sources.list.d/uninett.list <<EOF
+# For pakker kompilert av UNINETT
+deb http://apt.uninett.no/debian squeeze main 
+EOF
+
+apt-get install sipshaman
+
+edit poll.cf, register-name.txt as needed
+edit sipshaman.cron and install
 
 
 2010-02-23 Olav.Kvittem@uninett.no
+2011-11-17

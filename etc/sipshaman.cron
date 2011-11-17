@@ -1,0 +1,5 @@
+# sipshaman example file to put i /etc/cron.d 
+# */10 * * * * root sipp-test < /etc/sipshaman/poll.cf
+#  */1 * * * * root /local/net-status/sipp/bin/sipp-start-responder > /dev/null
+#  59 23 * * * root killall sipp-responder bin/sipp
+

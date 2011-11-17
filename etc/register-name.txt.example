@@ -1,0 +1,5 @@
+# model file for register-name.txt
+SEQUENTIAL
+# sipp datafile for registration
+# user ; domain ; password
+sipp;sip.akademia.no;[authentication username=sipp password=skulleduhavisst]
