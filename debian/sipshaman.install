@@ -7,7 +7,6 @@ bin/sipp-test		usr/bin
 bin/sipp-start-responder	usr/bin
 bin/sipp-responder	usr/bin
 etc/register.xml	etc/sipshaman
-etc/poll.cf		etc/sipshaman
 etc/sipp-client-media.xml	etc/sipshaman
 etc/sipp-responder.xml	etc/sipshaman
 etc/sipshaman.cf	etc/sipshaman

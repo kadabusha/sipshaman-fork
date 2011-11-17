@@ -1,1 +1,4 @@
+etc/sipshaman.cron
 etc/sipp-test.cron
+etc/poll.cf.example
+etc/register-name.txt.example
