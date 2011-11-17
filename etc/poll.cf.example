@@ -1,1 +1,6 @@
-sip.akademia.no;sipp
+# sipshaman call probing config
+# format: server;service;out-proxy;type-of-number;testname;no.calls
+#   type-of-number - iPBX, MGW, .. for Xymon
+158.38.180.33:5062;+4773411481;158.38.180.33:5062;iPBX;sip.akademia.no,1
+158.38.180.33:5062;+4721523969;158.38.180.33:5062;iPBX;demo.uninett.no,1
+
