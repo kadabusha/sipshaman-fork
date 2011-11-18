@@ -9,7 +9,8 @@ BIN=/usr/bin
 BB_HOST=158.38.60.214
 # noc mail address
 NOC=sip-monitoring@uninett.no
-
+# sipp test user to register
+SIPP_USER=sipp
 # SIP port for REGISTER
 REGISTER_PORT=6050
 # SIP port sipp testing

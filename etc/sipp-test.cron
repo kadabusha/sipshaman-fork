@@ -1,8 +1,0 @@
-MAILTO=nav-drift@uninett.no
-# start sipp-testing
-0,10,20,30,40,50  *  * * * root nice /usr/bin/sipp-test < /etc/sipshaman/poll.cf >> /var/log/sipshaman/sipp-test.log 2>&1
-# remove raw pcap-files older than ..
-5 5 * * 0 root cd /var/log/sipshaman ; df -h .; nice find . -name 'rtp_*[0-9].pcap' -ctime +10 -delete; df -h .
-# kill old qstram jobs more than one day - i.e. time field is alphabetic
-#5 5 * * *  ps -ef | perl -ane 'printf "kill -HUP \%d\n",$F[1] if /bin\/qstream/ and $F[4] =~ /^[A-Z]/' | sh -x
-
