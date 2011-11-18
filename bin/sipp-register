@@ -41,5 +41,5 @@ test -d $hdir || mkdir $hdir
 
 cd $hdir
 
-$BIN/sipp $registrar -s sipp -i $interf -p $REGISTER_PORT -l 1 -m 1 -sf $CONF/register.xml -trace_err -trace_msg -inf $CONF/register-name.txt -bg
+$BIN/sipp $registrar -s $SIPP_USER -i $interf -p $REGISTER_PORT -l 1 -m 1 -sf $CONF/register.xml -trace_err -trace_msg -inf $CONF/register-name.txt -bg
 
