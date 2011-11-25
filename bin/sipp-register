@@ -3,10 +3,19 @@
 # register sipp user 
 # 
 
-. /etc/sipshaman/sipshaman.cf
+if test .$1 = .-cf ; then
+  source  $2
+  shift; shift
+else
+  source /etc/sipshaman/sipshaman.cf
+fi
 
 registrar=`/sbin/ifconfig eth0| perl -ne 'print $1 if /inet addr:(\d+\.\d+\.\d+\.\d+)/'`
 interf=$registrar
+
+if test .$SIP_PROXY = .; then
+  registrar=$SIP_PROXY
+fi
 
 if test .$1 = .-h; then
   echo Usage__: $0 "[registrar [announed-interface]]"
@@ -41,5 +50,5 @@ test -d $hdir || mkdir $hdir
 
 cd $hdir
 
-$BIN/sipp $registrar -s $SIPP_USER -i $interf -p $REGISTER_PORT -l 1 -m 1 -sf $CONF/register.xml -trace_err -trace_msg -inf $CONF/register-name.txt -bg
+$BIN/sipp $registrar:$SIP_PROXY_PORT -s $SIPP_USER -i $interf -p $REGISTER_PORT -l 1 -m 1 -sf $CONF/register.xml -trace_err -trace_msg -inf $CONF/register-name.txt -bg
 
