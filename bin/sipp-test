@@ -1,6 +1,11 @@
 #!/bin/bash
 
-source /etc/sipshaman/sipshaman.cf
+if test .$1 = .-cf ; then
+  source $2
+  shift;shift
+else
+  source /etc/sipshaman/sipshaman.cf
+fi
 
 y=`date +%Y`
 m=`date +%m`

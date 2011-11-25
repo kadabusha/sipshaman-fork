@@ -87,8 +87,8 @@ foreach $tasklog(@ARGV){
 	    chomp(@f);
 	    my $rtp_files= join(' ', @f);
 	    $cmd="/usr/bin/qstream -v  -rtp -rtt  '$rtt' -id $src -xml $tmp $rtp_files";
-
-	    $qstream_rep='date +%T $pid $port $mport $service@$server   $function $machine ping' . $_;
+	    my $T=`date +%T`; chomp($T);
+	    $qstream_rep=sprintf "%s $pid $port $mport $service@$server   $function $machine ping",$T;
 	    open QSTREAM, "$cmd|";
 	    while(<QSTREAM>){ $qstream_rep.=$_}
 	    close QSTREAM;
