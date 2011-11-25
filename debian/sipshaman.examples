@@ -1,4 +1,3 @@
-etc/sipshaman.cron
-etc/sipp-test.cron
+doc/examples/sipshaman.cron
+doc/examples/register-name.txt.example
 etc/poll.cf.example
-etc/register-name.txt.example
