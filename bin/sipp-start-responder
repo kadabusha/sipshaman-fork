@@ -1,8 +1,17 @@
-#!/bin/sh
-# start responder if not running
-. /etc/sipshaman/sipshaman.cf
+#!/bin/bash
+# start sipp-responder if not running
 
-ps axw | grep -q "sh .*/usr/bin/sipp-responde[r]" -
-if test $? -eq 1; then # not found and ok to run
-  $BIN/sipp-responder&
+# usage $0 config-file...
+
+if test $# -le 0; then
+  set /etc/sipshaman/sipshaman.cf
 fi
+
+for cf in $*; do 
+
+  ps axw | grep -q "sh .*/usr/bin/sipp-responde[r].*$cf" -
+  if test $? -eq 1; then # not found and ok to run
+     $BIN/sipp-responder -cf $cf&
+  fi
+
+done

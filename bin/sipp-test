@@ -1,5 +1,9 @@
 #!/bin/bash
 
+# start a test series of sipp-calls with specs from a config file
+# log data about the tests so that files can be combined to edible reports
+# by qstream-sipp-check
+
 if test .$1 = .-cf ; then
   source $2
   shift;shift
@@ -22,7 +26,7 @@ test -d $ddir || mkdir $ddir
 hdir=$ddir/$h
 test -d $hdir || mkdir $hdir
 
-cd $hdir
+cd $hdir  || exit -1   # better not to do anything
 
 
 port=$SIP_PORT   # sip service port start
@@ -44,7 +48,7 @@ while read server service outproxy function machine calls; do
 
   echo $server | egrep -q '^\s*#'
   if test $? = 1 ; then # no comment
-      /usr/bin/sipp $server -s $service -i $addr -sf $CONF/sipp-client-media.xml -p $port -mp $mport -m $calls -rp 200000 -l 1 -trace_stat  -fd 99999 -trace_logs -trace_msg -trace_err -bg -nofork -rsa $outproxy 2>> sipp.err >> sipp.log &
+      /usr/bin/sipp $server -s $service -i $addr -sf $CONF/$CLIENT_SCENARIO -p $port -mp $mport -m $calls -rp 200000 -l 1 -trace_stat  -fd 99999 -trace_logs -trace_msg -trace_err -bg -nofork -rsa $outproxy 2>> sipp.err >> sipp.log &
       pid=$!
       adr=$service@$server
       server_ip=`echo $server| sed -e 's/:.*//'`

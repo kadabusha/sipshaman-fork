@@ -13,8 +13,15 @@ NOC=sip-monitoring@uninett.no
 SIPP_USER=sipp
 # SIP port for REGISTER
 REGISTER_PORT=6050
+# Outgoing Proxy (default is first interface address)
+# SIP_PROXY
+SIP_PROXY_PORT=5062
 # SIP port sipp testing
 SIP_PORT=5065 
 # SIP RTP media port start
 MEDIA_PORT=16400
-
+# REPORT_TAG
+REPORT_TAG=iPBX
+# scenario_file to use for
+RESPONDER_SCENARIO=sipp-responder.xml
+CLIENT_SCENARIO=sipp-client-media.xml

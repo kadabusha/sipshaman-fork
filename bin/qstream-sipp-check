@@ -7,6 +7,7 @@ use XML::Simple;
 use Data::Dumper;
 use Socket;
 use IO::Select;
+use DateTime;
 require "newgetopt.pl";
 
 @opts=( 'f', 'die=s', 'timeout=s', 'bb=s', 'remote', 'debug', 'dump', 'v', 'h', 'help' );
@@ -79,6 +80,52 @@ foreach $tasklog(@ARGV){
 	}
 	$machine=~s/\./,/g;
 
+#
+# checking call success
+	my $log='';
+	my $stime=$time;  # default time from tasklog, but prefer from call-log csv
+	my $sdate=$date; 
+
+	if ($opt_remote){
+	    if ($n > 0){
+		$status=100;
+		$message="Call received successfully";
+	    } else {
+		$status=0;
+		$message="No calls received\n";
+	    }
+	    &bb_report("C-$function", $machine, &bb_color($call_limit,$bb_color,$status), $message);
+	} else {
+
+	    open (CSV, "/usr/bin/sipp-print  -f 'CurrentTime|ElapsedTime(C)|OutgoingCall(C)|SuccessfulCall(C)|FailedCall(C)|Retransmissions(C)|ResponseTime1(C)|ResponseTime1StDev(C)|CallLength(C)|CallLengthStDev(C)'  *${pid}_.csv|");
+	    while(<CSV>){
+		$log.=$_;
+		if (/^[\d-]+[\d:]+\s+\d+/){  # date time unixt
+		    ($sdate,$etime,$unixtime,$elapsed, $callsout, $success, $failed, $rest)=split;
+		    if ($success>0){
+			my ($hh, $ss)=split(/:/, $elapsed);
+			my $esec=3600*$hh+60*$mm+$ss;
+			my $dt=DateTime->from_epoch(epoch => $unixtime);
+			$dt->subtract(seconds => $esec);
+			$stime=$dt->hms;
+			$sdate=$dt->ymd;
+			
+			$calls=$success+$failed;
+			$status=100*$success/$calls; # success rate in %
+			$message=sprintf "$sdate $stime - %d percent success (%d/%d)\n%s",$status,$success,$calls,$log;
+		    } else {
+			$status=0;
+			$message="No successfull calls :\n $log";
+		    }
+		    &bb_report("C-$function", $machine, &bb_color($call_limit,$bb_color,$status), $message);
+		}
+	    }
+	    close CSV;
+	}
+
+#
+# checking call rtp quality
+
 	my $mossum=0, $n=0;
 	my @f=`ls rtp_*${pid}_*.pcap* 2>/dev/null`; 
 	my $qstream_rep='';
@@ -86,7 +133,7 @@ foreach $tasklog(@ARGV){
 	if($#f >=0){ # yess some files
 	    chomp(@f);
 	    my $rtp_files= join(' ', @f);
-	    $cmd="/usr/bin/qstream -v  -rtp -rtt  '$rtt' -id $src -xml $tmp $rtp_files";
+	    $cmd="/usr/bin/qstream -v -name '${id}:$function' -rtp -rtt  '$rtt' -id $src -xml $tmp $rtp_files";
 	    my $T=`date +%T`; chomp($T);
 	    $qstream_rep=sprintf "%s $pid $port $mport $service@$server   $function $machine ping",$T;
 	    open QSTREAM, "$cmd|";
@@ -114,44 +161,12 @@ foreach $tasklog(@ARGV){
 	if ($n >0){
 	    my $mean_mos=$mossum/$n;
 	    &bb_report("M-$function", $machine, &bb_color($mos_limit,$bb_color,$min_mos), 
-		       sprintf "$date $time - %.1f \n%s\n",$min_mos,$qstream_rep);
+		       sprintf "$sdate $stime - %.1f \n%s\n",$min_mos,$qstream_rep);
 	    
 	} else {
 	    &bb_report("M-$function", $machine, &bb_color($mos_limit,$bb_color,0), "No RTP files");
 	}
 	
-	my $log='';
-# checking call success
-
-	if ($opt_remote){
-	    if ($n > 0){
-		$status=100;
-		$message="Call received successfully";
-	    } else {
-		$status=0;
-		$message="No calls received\n";
-	    }
-	    &bb_report("C-$function", $machine, &bb_color($call_limit,$bb_color,$status), $message);
-	} else {
-
-	    open (CSV, "/usr/bin/sipp-print  -f 'OutgoingCall(C)|SuccessfulCall(C)|FailedCall(C)|Retransmissions(C)|ResponseTime1(C)|ResponseTime1StDev(C)|CallLength(C)|CallLengthStDev(C)'  *${pid}_.csv|");
-	    while(<CSV>){
-		$log.=$_;
-		if (/^\s+\d+\s+\d+\s+/){
-		    my ($callsout, $success, $failed, $rest)=split;
-		    if ($success>0){
-			$calls=$success+$failed;
-			$status=100*$success/$calls; # success rate in %
-			$message=sprintf "$date $time - %d percent success (%d/%d)\n%s",$status,$success,$calls,$log;
-		    } else {
-			$status=0;
-			$message="No successfull calls :\n $log";
-		    }
-		    &bb_report("C-$function", $machine, &bb_color($call_limit,$bb_color,$status), $message);
-		}
-	    }
-	    close CSV;
-	}
 		   
 	
     }
@@ -162,7 +177,7 @@ foreach $tasklog(@ARGV){
 
 
 
-unlink ($tmp);
+unlink $tmp;
 exit(0);
 
 sub bb_color {

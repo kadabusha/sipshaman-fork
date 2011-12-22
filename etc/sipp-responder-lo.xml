@@ -106,7 +106,7 @@
   <!-- Play a pre-recorded PCAP file (RTP stream)                       -->
   <nop>
     <action> 
-     <exec command="tcpdump-vent 10 -i eth0 -q -s 0 -w rtp_[$sdp_ip]_[pid]_[call_number].pcap src host [$sdp_ip] and dst port [$my_media_port]"/>
+     <exec command="tcpdump-vent 10 -i lo -q -s 0 -w rtp_[$sdp_ip]_[pid]_[call_number].pcap src host [$sdp_ip] and dst port [$my_media_port]"/>
      <exec play_pcap_audio="/etc/sipshaman/pcap/g711a.pcap"/>
     </action>
   </nop>

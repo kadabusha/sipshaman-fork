@@ -1,7 +1,18 @@
 # sipshaman example file to put i /etc/cron.d 
+#
+# register the sipp user
 # 1 * * * * root sipp-register
+#
+# run sipp tests
 # */10 * * * * root sipp-test < /etc/sipshaman/poll.cf
+#
+# start a sipp responder every hour
 #  */1 * * * * root sipp-start-responder > /dev/null
 #  59 * * * * root sleep 50;killall sipp-responder bin/sipp
-# 0 * * * * root sipp-bb 
+#
+# report to big brother
+# 1 * * * * root sipp-bb 
+#
+# clean up old pcap files
+# 3 3 * * * root find /var/log/sipshaman/ -name rtp_\*.pcap -mtime +7 -delete
 

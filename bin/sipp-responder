@@ -5,12 +5,12 @@
 # and exits withinafter an hour
 
 
-interf=`/sbin/ifconfig eth0| perl -ne 'print $1 if /inet addr:(\d+\.\d+\.\d+\.\d+)/'`
-proxy=$interf
+iaddr=`/sbin/ifconfig eth0| perl -ne 'print $1 if /inet addr:(\d+\.\d+\.\d+\.\d+)/'`
+proxy=$iaddr
 
 if test .$1 = .-h; then
-  echo Usage__: $0 "[-cf] <config-file> [proxy [announed-interface]]"
-  echo Default: $0 $proxy $interf
+  echo Usage__: $0 "[-cf <config-file>] [proxy [announed-interface]]"
+  echo Default: $0 $proxy $iaddr
   exit 1
 fi
 
@@ -26,12 +26,12 @@ if test $# -gt 0; then
    shift
 fi
 if test $# -gt 0; then
-   interf=$1
+   iaddr=$1
    shift
 fi
 
   while test 1=1 ; do
-    ps axw | grep -q "$BIN/[s]ipp $proxy" -
+    ps -ef | egrep -q "$BIN/[s]ipp .*-p $SIP_PORT" -
 
     if test $? = 1 ; then # not found
 	y=`date +%Y`
@@ -52,12 +52,13 @@ fi
 
 	cd $hdir
 	port=$SIP_PORT
-        mport=16388
+        mport=$MEDIA_PORT
+	idle_time=$((60-`date +%M`-1))  # end just before every hour if now response
 
-	$BIN/sipp $proxy:$PROXY_PORT -s sipp -i $interf -p $port -mp $mport -l 1 -m 1 -sf $CONF/sipp-responder.xml -trace_stat -trace_logs -trace_err -trace_msg -rp 600000 -r 1 -bg -nofork 2>> sipp.err >> sipp.log &
+	$BIN/sipp $proxy:$SIP_PROXY_PORT -s sipp -i $iaddr -p $port -mp $mport -recv_timeout $idle_time -l 1 -m 1 -sf $CONF/$RESPONDER_SCENARIO -trace_stat -trace_logs -trace_err -trace_msg -rp 600000 -r 1 -bg -nofork 2>> sipp.err >> sipp.log &
 
 	pid=$!
-	echo $y-$m-$d `date +%T` $pid $port $mport sipp@$interf $REPORT_TAG `hostname --fqdn` 0 >> task.log
+	echo $y-$m-$d `date +%T` $pid $port $mport sipp@$iaddr $REPORT_TAG `hostname --fqdn` 0 >> task.log
 	t2=`date +%s`
 	dt=$(($t2-$t1))
 	if test $dt -lt 5; then #
