@@ -27,6 +27,8 @@ $mos_limit=[0,3.2,3.9]; # mos values
 $bb_color=["red", "yellow", "green"];
 $call_limit=[0,70,90]; # call succes in percent
 
+our $tz=DateTime::TimeZone->new( name => 'local' );
+
 # check results from sipp-initated calls with tcpdumps in sipp-test
 
 $tmp="/tmp/qstream-sipp-$$.xml";
@@ -83,7 +85,7 @@ foreach $tasklog(@ARGV){
 #
 # checking call success
 	my $log='';
-	my $stime=$time;  # default time from tasklog, but prefer from call-log csv
+	our $stime=$time;  # default time from tasklog, but prefer from call-log csv
 	my $sdate=$date; 
 
 	if ($opt_remote){
@@ -100,12 +102,12 @@ foreach $tasklog(@ARGV){
 	    open (CSV, "/usr/bin/sipp-print  -f 'CurrentTime|ElapsedTime(C)|OutgoingCall(C)|SuccessfulCall(C)|FailedCall(C)|Retransmissions(C)|ResponseTime1(C)|ResponseTime1StDev(C)|CallLength(C)|CallLengthStDev(C)'  *${pid}_.csv|");
 	    while(<CSV>){
 		$log.=$_;
-		if (/^[\d-]+[\d:]+\s+\d+/){  # date time unixt
+		if (/^[\d-]+[\d:]+\s+\d+/){  # date time unixtime
 		    ($sdate,$etime,$unixtime,$elapsed, $callsout, $success, $failed, $rest)=split;
 		    if ($success>0){
-			my ($hh, $ss)=split(/:/, $elapsed);
+			my ($hh, $mm, $ss)=split(/:/, $elapsed);
 			my $esec=3600*$hh+60*$mm+$ss;
-			my $dt=DateTime->from_epoch(epoch => $unixtime);
+			my $dt=DateTime->from_epoch(epoch => $unixtime, time_zone => $tz);
 			$dt->subtract(seconds => $esec);
 			$stime=$dt->hms;
 			$sdate=$dt->ymd;
@@ -133,7 +135,7 @@ foreach $tasklog(@ARGV){
 	if($#f >=0){ # yess some files
 	    chomp(@f);
 	    my $rtp_files= join(' ', @f);
-	    $cmd="/usr/bin/qstream -v -name '${id}:$function' -rtp -rtt  '$rtt' -id $src -xml $tmp $rtp_files";
+	    $cmd="/usr/bin/qstream -v -id '${id}:$function' -rtp -rtt  '$rtt' -id $src -xml $tmp $rtp_files";
 	    my $T=`date +%T`; chomp($T);
 	    $qstream_rep=sprintf "%s $pid $port $mport $service@$server   $function $machine ping",$T;
 	    open QSTREAM, "$cmd|";
