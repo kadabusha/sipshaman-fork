@@ -11,23 +11,9 @@ else
   source /etc/sipshaman/sipshaman.cf
 fi
 
-y=`date +%Y`
-m=`date +%m`
-d=`date +%d`
-h=`date +%H`
-
-
-ydir=$DATA/$y
-test -d $ydir || mkdir $ydir
-mdir=$ydir/$m
-test -d $mdir || mkdir $mdir
-ddir=$mdir/$d
-test -d $ddir || mkdir $ddir
-hdir=$ddir/$h
-test -d $hdir || mkdir $hdir
-
+hdir=`date +$DATA/%Y/%m/%d/%H`
+mkdir -p $hdir
 cd $hdir  || exit -1   # better not to do anything
-
 
 port=$SIP_PORT   # sip service port start
 mport=$MEDIA_PORT # rtp service port start

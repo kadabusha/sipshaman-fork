@@ -34,36 +34,29 @@ fi
     ps -ef | egrep -q "$BIN/[s]ipp .*-p $SIP_PORT" -
 
     if test $? = 1 ; then # not found
-	y=`date +%Y`
-	m=`date +%m`
-	d=`date +%d`
-	h=`date +%H`
+	hdir=`date +$DATA/%Y/%m/%d/%H`
+	mkdir -p $hdir
+	cd $hdir  || exit -1   # better not to do anything
+
 	t1=`date +%s`
-
-
-	ydir=$DATA/$y
-	test -d $ydir || mkdir $ydir
-	mdir=$ydir/$m
-	test -d $mdir || mkdir $mdir
-	ddir=$mdir/$d
-	test -d $ddir || mkdir $ddir
-	hdir=$ddir/$h
-	test -d $hdir || mkdir $hdir
-
-	cd $hdir
 	port=$SIP_PORT
         mport=$MEDIA_PORT
-	idle_time=$((60-`date +%M`-1))  # end just before every hour if now response
+
+        # end just 3 sec before every hour if now response (millisec)
+	idle_time="$(((60-`date +%M|sed -e s/^0//`)*60000+(60-`date +%S|sed -e s/^0//`-3)*1000))"  
 
 	$BIN/sipp $proxy:$SIP_PROXY_PORT -s sipp -i $iaddr -p $port -mp $mport -recv_timeout $idle_time -l 1 -m 1 -sf $CONF/$RESPONDER_SCENARIO -trace_stat -trace_logs -trace_err -trace_msg -rp 600000 -r 1 -bg -nofork 2>> sipp.err >> sipp.log &
 
 	pid=$!
 	echo $y-$m-$d `date +%T` $pid $port $mport sipp@$iaddr $REPORT_TAG `hostname --fqdn` 0 >> task.log
+
+	wait $pid
+
 	t2=`date +%s`
-	dt=$(($t2-$t1))
+	dt="$(($t2-$t1))"
 	if test $dt -lt 5; then #
-	    echo  #### too short interval $dt | mail -s sipp-responder oak@uninett.no
-	    exit 1
+	    echo  #### too short interval $dt for pid $pid  >> sipp.err
+#	    exit 1
 	fi
 
     fi

@@ -9,18 +9,9 @@ else
   source /etc/sipshaman/sipshaman.cf
 fi
 
-y=`date +%Y`
-m=`date +%m`
-d=`date +%d`
-h=`date +%H`
-
-ydir=$DATA/$y
-mdir=$ydir/$m
-ddir=$mdir/$d
-hdir=$ddir/$h
-
+hdir=`date +$DATA/%Y/%m/%d/%H`
 cd $hdir
 
- $BIN/qstream-sipp-check $* -bb $BB_HOST -f -die 59 task.log
+$BIN/qstream-sipp-check $* -bb $BB_HOST -f -die 59 task.log
 
 

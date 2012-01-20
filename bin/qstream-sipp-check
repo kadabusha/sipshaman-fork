@@ -145,6 +145,8 @@ foreach $tasklog(@ARGV){
 	    # system($cmd); # || die "command failed : $cmd : $!";
 	    $xml = XMLin($tmp) || die "Could not analyze XML $tmp : $!";
 	    print Dumper($xml) if $opt_dump;
+	    unlink $tmp;
+
 	    
 	    my @flow=();
 	    if (ref($xml->{flow}) eq "ARRAY"){
@@ -179,7 +181,6 @@ foreach $tasklog(@ARGV){
 
 
 
-unlink $tmp;
 exit(0);
 
 sub bb_color {
