@@ -8,5 +8,8 @@ Standards-Version: 3.9.1
 Package: sipshaman
 Architecture: all
 Description: Voice over IP quality measurement tool
-Sipshaman is a tool to probe the quality of a SIP-based voip telephony service. It can compute the MOS values and other performance parameteres and aggregate this for a trends analysis as well as presentation to a live monitoring of status.
+ Sipshaman is a tool to probe the quality of a SIP-based voip telephony 
+ service. It can compute the MOS values and other performance parameters and
+ aggregate this for a trends analysis as well as presentation to a live
+ monitoring of status.
 Depends: ${misc:Depends}, ${perl:Depends}, perl-modules, libxml-simple-perl, tcpdump, qstream, hobbit-client, net-tools, iputils-ping, sipp-uninett
