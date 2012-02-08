@@ -9,9 +9,18 @@ else
   source /etc/sipshaman/sipshaman.cf
 fi
 
-hdir=`date +$DATA/%Y/%m/%d/%H`
-cd $hdir
+    while test 1=1 ; do
+	ps -ef | egrep -q "$BIN/qstream-[s]ipp-check .*-bb $BB_HOST" -
 
-$BIN/qstream-sipp-check $* -bb $BB_HOST -f -die 59 task.log
+	if test $? = 1 ; then # not found
+
+	    hdir=`date +$DATA/%Y/%m/%d/%H`
+	    cd $hdir
+
+	    lifemin="$((60-`date +%M|sed -e s/^0//`))"  # die at top of hour
+	    $BIN/qstream-sipp-check $* -bb $BB_HOST -f -die $lifemin task.log
+	fi
+	sleep 3
+    done
 
 

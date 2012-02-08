@@ -39,8 +39,8 @@ while read server service outproxy function machine calls; do
       adr=$service@$server
       server_ip=`echo $server| sed -e 's/:.*//'`
 #      echo server_ip $server_ip
-      echo $y-$m-$d `date +%T` $pid $port $mport $service@$server   $function $machine `ping -c 10 -i 0.5 -q $server_ip | awk -F / '/^rtt /{print $5}'`>> task.log
-      time=$y-$m-$d-$h
+      echo `date "+%F %T"` $pid $port $mport $service@$server   $function $machine `ping -c 10 -i 0.5 -q $server_ip | awk -F / '/^rtt /{print $5}'`>> task.log
+#      time=$y-$m-$d-$h
 #      perl -e "dbmopen(%tests, 'sip-test.dbm',0622); \$tests\{$time,$pid\}=$adr;dbmclose(%tests)"
 
       port=$(($port+2))

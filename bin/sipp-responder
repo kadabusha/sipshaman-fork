@@ -48,7 +48,7 @@ fi
 	$BIN/sipp $proxy:$SIP_PROXY_PORT -s sipp -i $iaddr -p $port -mp $mport -recv_timeout $idle_time -l 1 -m 1 -sf $CONF/$RESPONDER_SCENARIO -trace_stat -trace_logs -trace_err -trace_msg -rp 600000 -r 1 -bg -nofork 2>> sipp.err >> sipp.log &
 
 	pid=$!
-	echo $y-$m-$d `date +%T` $pid $port $mport sipp@$iaddr $REPORT_TAG `hostname --fqdn` 0 >> task.log
+	echo `date "+%F %T"` $pid $port $mport sipp@$iaddr $REPORT_TAG `hostname --fqdn` 0 >> task.log
 
 	wait $pid
 

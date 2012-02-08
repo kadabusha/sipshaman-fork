@@ -103,14 +103,8 @@ foreach $tasklog(@ARGV){
 	    while(<CSV>){
 		$log.=$_;
 		if (/^[\d-]+[\d:]+\s+\d+/){  # date time unixtime
-		    ($sdate,$etime,$unixtime,$elapsed, $callsout, $success, $failed, $rest)=split;
+		    ($sdate,$stime,$unixtime,$elapsed, $callsout, $success, $failed, $retrans, $responsetime, $callLength, $rest)=split;
 		    if ($success>0){
-			my ($hh, $mm, $ss)=split(/:/, $elapsed);
-			my $esec=3600*$hh+60*$mm+$ss;
-			my $dt=DateTime->from_epoch(epoch => $unixtime, time_zone => $tz);
-			$dt->subtract(seconds => $esec);
-			$stime=$dt->hms;
-			$sdate=$dt->ymd;
 			
 			$calls=$success+$failed;
 			$status=100*$success/$calls; # success rate in %

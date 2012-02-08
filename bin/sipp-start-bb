@@ -1,5 +1,5 @@
 #!/bin/bash
-# start sipp-responder if not running
+# start sipp-BB if not running
 
 # usage $0 config-file...
 
@@ -10,9 +10,9 @@ fi
 
 for cf in $*; do 
   source $cf
-  ps axw | grep -q "sh .*/usr/bin/sipp-responde[r].*$cf" -
+  ps axw | grep -q "sh .*/usr/bin/sipp-b[b].*$cf" -
   if test $? -eq 1; then # not found and ok to run
-     $BIN/sipp-responder -cf $cf&
+     $BIN/sipp-bb -cf $cf&
   fi
 
 done
