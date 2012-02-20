@@ -1,3 +1,9 @@
+sipshaman (0.7-1) unstable; urgency=low
+
+  * Updates, svn version r27
+
+ -- Jon K Hellan <jon.kare.hellan@uninett.no>  Mon, 20 Feb 2012 13:33:51 +0100
+
 sipshaman (0.6-2) unstable; urgency=low
 
   * Updated package description, svn version r25
