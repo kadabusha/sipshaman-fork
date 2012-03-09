@@ -10,10 +10,11 @@ use IO::Select;
 use DateTime;
 require "newgetopt.pl";
 
-@opts=( 'f', 'die=s', 'timeout=s', 'bb=s', 'remote', 'debug', 'dump', 'v', 'h', 'help' );
+@opts=( 'f', 'die=s', 'timeout=s', 'bb=s', 'xml', 'remote', 'debug', 'dump', 'v', 'h', 'help' );
 
 my $usage="Usage $0 [-debug] [-die mins] [-remote] [-f]
 -bb <hostname> - XYMON/BB host to receive reports
+-xml  - leave an xml-file for each flow in the current directory
 -remote - this is remote sipp (not used)
 -f - wait for results like tail -f
 -die <minutes> - end after <minutes>
@@ -35,9 +36,16 @@ $tmp="/tmp/qstream-sipp-$$.xml";
 
 my $endooflife=0;
 
+
 if ($opt_die){
     $endoflife=time+$opt_die*60;
+    $SIG{ALRM} = sub { 
+	printf "Ended after $opt_die minutes\n";
+	exit(0);
+    };
+    alarm($opt_die*60+3); # allow for 3 seconds to die voluntary
 }
+
 
 
 my $timeout= $opt_timeout || 1; # wait n seconds for file too be updated
@@ -74,13 +82,14 @@ foreach $tasklog(@ARGV){
 	}
 	
 	$src=$id; $src=~ s/.*@//;
-	$machine=$src if !$machine ne '';
-	$machine=~s/:\d+$//;
-	if ($machine=~ /^\d+\.\d+/){ # lookup hostname
-	    my $iaddr=inet_aton($machine);
+	$bb_machine=$machine;
+	$bb_machine=$src if $bb_machine eq '';
+	$bb_machine=~s/:\d+$//;
+	if ($bb_machine=~ /^\d+\.\d+/){ # lookup hostname
+	    my $iaddr=inet_aton($bb_machine);
 	    $machine= gethostbyaddr($iaddr, AF_INET);
 	}
-	$machine=~s/\./,/g;
+	$bb_machine=~s/\./,/g;
 
 #
 # checking call success
@@ -96,15 +105,21 @@ foreach $tasklog(@ARGV){
 		$status=0;
 		$message="No calls received\n";
 	    }
-	    &bb_report("C-$function", $machine, &bb_color($call_limit,$bb_color,$status), $message);
+	    &bb_report("C-$function", $bb_machine, &bb_color($call_limit,$bb_color,$status), $message);
 	} else {
 
 	    open (CSV, "/usr/bin/sipp-print  -f 'CurrentTime|ElapsedTime(C)|OutgoingCall(C)|SuccessfulCall(C)|FailedCall(C)|Retransmissions(C)|ResponseTime1(C)|ResponseTime1StDev(C)|CallLength(C)|CallLengthStDev(C)'  *${pid}_.csv|");
 	    while(<CSV>){
 		$log.=$_;
 		if (/^[\d-]+[\d:]+\s+\d+/){  # date time unixtime
-		    ($sdate,$stime,$unixtime,$elapsed, $callsout, $success, $failed, $retrans, $responsetime, $callLength, $rest)=split;
+		    ($sdate,$etime,$unixtime,$elapsed, $callsout, $success, $failed, $rest)=split;
 		    if ($success>0){
+			my ($hh, $mm, $ss)=split(/:/, $elapsed);
+			my $esec=3600*$hh+60*$mm+$ss;
+			my $dt=DateTime->from_epoch(epoch => $unixtime, time_zone => $tz);
+#			$dt->subtract(seconds => $esec);
+			$stime=$dt->hms;
+			$sdate=$dt->ymd;
 			
 			$calls=$success+$failed;
 			$status=100*$success/$calls; # success rate in %
@@ -113,7 +128,7 @@ foreach $tasklog(@ARGV){
 			$status=0;
 			$message="No successfull calls :\n $log";
 		    }
-		    &bb_report("C-$function", $machine, &bb_color($call_limit,$bb_color,$status), $message);
+		    &bb_report("C-$function", $bb_machine, &bb_color($call_limit,$bb_color,$status), $message);
 		}
 	    }
 	    close CSV;
@@ -129,7 +144,10 @@ foreach $tasklog(@ARGV){
 	if($#f >=0){ # yess some files
 	    chomp(@f);
 	    my $rtp_files= join(' ', @f);
-	    $cmd="/usr/bin/qstream -v -id '${id}:$function' -rtp -rtt  '$rtt' -id $src -xml $tmp $rtp_files";
+	    my $xml_out=$tmp;	    
+	    $xml_out="$machine-$function-${stime}_$pid.xml" if ($opt_xml);
+
+	    $cmd="/usr/bin/qstream -v -name '${id}:$function' -rtp -rtt  '$rtt' -xml $xml_out $rtp_files";
 	    my $T=`date +%T`; chomp($T);
 	    $qstream_rep=sprintf "%s $pid $port $mport $service@$server   $function $machine ping",$T;
 	    open QSTREAM, "$cmd|";
@@ -137,9 +155,9 @@ foreach $tasklog(@ARGV){
 	    close QSTREAM;
 
 	    # system($cmd); # || die "command failed : $cmd : $!";
-	    $xml = XMLin($tmp) || die "Could not analyze XML $tmp : $!";
+	    $xml = XMLin($xml_out) || die "Could not analyze XML $xml_out : $!";
 	    print Dumper($xml) if $opt_dump;
-	    unlink $tmp;
+	    unlink $tmp if -f $tmp;
 
 	    
 	    my @flow=();
@@ -190,6 +208,9 @@ sub bb_color {
 }
 
 sub bb_report {
+    
+    return 0 if ! $opt_bb;
+
     my ($bbtest, $machine, $color, $msg)=@_;
 #    my $cmd="/usr/lib/hobbit/client/bin/bb $bb_host 'status $machine.$bbtest $color $msg\n'>>$ENV{HOME}/cmd.log 2>&1";
     my $cmd="/usr/lib/hobbit/client/bin/bb $bb_host 'status $machine.$bbtest $color $msg\n'";
