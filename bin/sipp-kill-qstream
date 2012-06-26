@@ -1,0 +1,8 @@
+#! /bin/sh
+# sippshaman script to check if qstream-sipp-check is running on the next hour 
+# after beeing started, because it will be reading thre previous task.log file
+# if started on the previous hour it is killed and a new one will be started by sipp-bb
+
+ps -ef | perl -ne 'if( /^\w+\s+(\d+)\s+\d+\s+\d+\s+(\d+):\d+\d+.*qstream-sipp-chec[k]/){ use DateTime;$dt = DateTime->now(time_zone => "Europe/Oslo"); printf "kill %d \n", $1 if $2 < $dt->hour;}' | sh -x
+
+

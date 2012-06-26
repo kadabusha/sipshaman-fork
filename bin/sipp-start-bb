@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/bash 
 # start sipp-BB if not running
 
 # usage $0 config-file...
@@ -14,5 +14,9 @@ for cf in $*; do
   if test $? -eq 1; then # not found and ok to run
      $BIN/sipp-bb -cf $cf&
   fi
-
 done
+
+# moved to separate script
+# sleep 10
+# ps -ef | perl -ne 'if( /^\w+\s+(\d+)\s+\d+\s+\d+\s+(\d+):\d+\d+.*qstream-sipp-chec[k]/){ use DateTime;$dt = DateTime->now(time_zone => "Europe/Oslo"); printf "kill %d \n", $1 if $2 < $dt->hour;}' | sh -x
+

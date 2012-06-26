@@ -6,9 +6,8 @@
 # run sipp tests
 # */10 * * * * root sipp-test < /etc/sipshaman/poll.cf
 #
-# start a sipp responder every hour
+# start a sipp responder every hour (default config /etc/sipshaman/sipshaman.cf)
 #  */1 * * * * root sipp-start-responder > /dev/null
-#  59 * * * * root sleep 50;killall sipp-responder bin/sipp
 #
 # report to big brother
 # 1 * * * * root sipp-bb 

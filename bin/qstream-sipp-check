@@ -7,6 +7,7 @@ use XML::Simple;
 use Data::Dumper;
 use Socket;
 use IO::Select;
+use Fcntl qw(F_GETFL F_SETFL O_NONBLOCK);
 use DateTime;
 require "newgetopt.pl";
 
@@ -19,6 +20,7 @@ my $usage="Usage $0 [-debug] [-die mins] [-remote] [-f]
 -f - wait for results like tail -f
 -die <minutes> - end after <minutes>
 ";
+
 my $rc=&NGetOpt(@opts);
 die $usage if not $rc or $opt_h or $opt_help;
 
@@ -45,22 +47,33 @@ my $timeout= $opt_timeout || 1; # wait n seconds for file too be updated
 foreach $tasklog(@ARGV){
     
     open TASKLOG, "<$tasklog" || die "Could not open $tasklog : $!";
+#    my $flags;
+#    fcntl(TASKLOG, F_GETFL, $flags) || die $!; # Get the current flags on the filehandle
+#    $flags |= O_NONBLOCK; # Add non-blocking to the flags
+#    fcntl(TASKLOG, F_SETFL, $flags) || die $!; # Set the flags on the filehandle
+#    $rin = $win = $ein = '';
+#    vec($rin,fileno(TASKLOG),1) = 1;
+ #   $ein = $rin | $win;
 
-    $rin = $win = $ein = '';
-    vec($rin,fileno(TASKLOG),1) = 1;
-    $ein = $rin | $win;
+#    while( $nfound=select($rout=$rin, $wout=$win, $eout=$ein, $timeout) ){ # read task.log
+    while (1){
 
-    while( $nfound=select($rout=$rin, $wout=$win, $eout=$ein, $timeout) ){ # read task.log
-
-	if (!$nfound){ # timeout
-	    exit(1) if $opt_die && (time > $endoflife); 
-
+	if ($line=<TASKLOG>){
+	    &process_line($line);
+	} else {
 	    last if !$opt_f;
-	} elsif (!eof(TASKLOG)) { # line ready
-	    &process_line($line=<TASKLOG>);
-        } else { # probably eof
-	    last;  
+	    sleep $timeout;
 	}
+	exit(1) if $opt_die && (time > $endoflife); 
+
+
+
+#	} elsif (!eof(TASKLOG)) { # line ready
+#	} elsif ($opt_die){
+#	    last if (time > $endoflife);
+#        } else { # probably eof
+#	    last if ! $opt_f;  
+#	}
     }
     close TASKLOG;
 }
@@ -98,6 +111,10 @@ sub process_line {
     my $log='';
     our $stime=$time;  # default time from tasklog, but prefer from call-log csv
     my $sdate=$date; 
+ #   my $xml_out="$machine-$function-${stime}_${pid}_sipp.xml" if ($opt_xml);
+    my $rtp_xml="$machine-$function-${stime}_${pid}_rtp.xml";
+    my $call_xml="$machine-$function-${stime}_${pid}_call.xml";
+
 
     if ($opt_remote){
 	if ($n > 0){
@@ -110,16 +127,17 @@ sub process_line {
 	&bb_report("C-$function", $bb_machine, &bb_color($call_limit,$bb_color,$status), $message);
     } else {
 
-	open (CSV, "/usr/bin/sipp-print  -f 'CurrentTime|ElapsedTime(C)|OutgoingCall(C)|SuccessfulCall(C)|FailedCall(C)|Retransmissions(C)|ResponseTime1(C)|ResponseTime1StDev(C)|CallLength(C)|CallLengthStDev(C)'  *${pid}_.csv|");
+	open (CSV, "/usr/bin/sipp-print  -f 'CurrentTime|ElapsedTime(C)|OutgoingCall(C)|SuccessfulCall(C)|FailedCall(C)|Retransmissions(C)|ResponseTime1(C)|ResponseTime1StDev(C)|CallLength(C)|CallLengthStDev(C)'  *_${pid}_.csv|");
 	while(<CSV>){
 	    $log.=$_;
 	    if (/^[\d-]+[\d:]+\s+\d+/){  # date time unixtime
-		($sdate,$etime,$unixtime,$elapsed, $callsout, $success, $failed, $rest)=split;
+		($sdate,$etime,$unixtime,$elapsed, $callsout, $success, $failed, $retrans, $response_t, $response_t_sd, 
+		 $call_lth, $call_lth_sd)=split;
 		if ($success>0){
-		    my ($hh, $mm, $ss)=split(/:/, $elapsed);
-		    my $esec=3600*$hh+60*$mm+$ss;
+		    my $csec=to_sec($call_lth);
 		    my $dt=DateTime->from_epoch(epoch => $unixtime, time_zone => $tz);
-#			$dt->subtract(seconds => $esec);
+# elapsed time is from start of sipp ..
+		    $dt->subtract(seconds => $csec);  
 		    $stime=$dt->hms;
 		    $sdate=$dt->ymd;
 		    
@@ -131,6 +149,13 @@ sub process_line {
 		    $message="No successfull calls :\n $log";
 		}
 		&bb_report("C-$function", $bb_machine, &bb_color($call_limit,$bb_color,$status), $message);
+
+		open XML, ">$call_xml" || die "Could not open $call_xml";
+		my $sectime=$etime;
+		$sectime=~s/\:\d+$//;  # remove ms
+	        print XML &call_xml("$id:$function", $machine_BB, $date, $stime,  $callsout, $success, $failed, $retrans, &to_sec($response_t), &to_sec($call_lth));
+		close XML;
+
 	    }
 	}
 	close CSV;
@@ -140,16 +165,14 @@ sub process_line {
 # checking call rtp quality
 
     my $mossum=0, $n=0;
-    my @f=`ls rtp_*${pid}_*.pcap* 2>/dev/null`; 
+    my @f=`ls rtp_*_${pid}_*.pcap* 2>/dev/null`; 
     my $qstream_rep='';
 
     if($#f >=0){ # yess some files
 	chomp(@f);
 	my $rtp_files= join(' ', @f);
-	my $xml_out=$tmp;	    
-	$xml_out="$machine-$function-${stime}_$pid.xml" if ($opt_xml);
 
-	$cmd="/usr/bin/qstream -v -name '${id}:$function' -rtp -rtt  '$rtt' -xml $xml_out $rtp_files";
+	$cmd="/usr/bin/qstream -v -name '${id}:$function' -rtp -rtt  '$rtt' -xml $rtp_xml $rtp_files";
 	my $T=`date +%T`; chomp($T);
 	$qstream_rep=sprintf "%s $pid $port $mport $service@$server   $function $machine ping",$T;
 	open QSTREAM, "$cmd|";
@@ -157,7 +180,7 @@ sub process_line {
 	close QSTREAM;
 
 	# system($cmd); # || die "command failed : $cmd : $!";
-	$xml = XMLin($xml_out) || die "Could not analyze XML $xml_out : $!";
+	$xml = XMLin($rtp_xml) || die "Could not analyze XML $rtp_xml : $!";
 	print Dumper($xml) if $opt_dump;
 	unlink $tmp if -f $tmp;
 
@@ -185,12 +208,24 @@ sub process_line {
 	&bb_report("M-$function", $machine, &bb_color($mos_limit,$bb_color,0), "No RTP files");
     }
     
-    
-    
+    system "ls -l  $rtp_xml  $call_xml" if $opt_debug;
+
+## do not merge because there could be calls without rtp
+    if ( 0 && $opt_xml){  
+	if ( -s $call_xml){
+	    if (-s $rtp_xml ){
+		system "sipmerge.php  $rtp_xml  $call_xml > $xml_out";
+	    } else {
+		rename $call_xml, $xml_out;
+	    }
+	}		
+    }    
+ #   unlink $rtp_xml if -f $rtp_xml;
+ #   unlink $call_xml if -f $call_xml;
 }
 
 
-#  /usr/bin/sipp-print -id $src -q -f 'OutgoingCall(C)|SuccessfulCall(C)|FailedCall(C)|Retransmissions(C)|ResponseTime1(C)|ResponseTime1StDev(C)|CallLength(C)|CallLengthStDev(C)'  *${pid}_.csv
+#  /usr/bin/sipp-print -id $src -q -f 'OutgoingCall(C)|SuccessfulCall(C)|FailedCall(C)|Retransmissions(C)|ResponseTime1(C)|ResponseTime1StDev(C)|CallLength(C)|CallLengthStDev(C)'  *_${pid}_.csv
 
 #--------------------------------------------------------------------------------
 
@@ -219,3 +254,38 @@ sub bb_report {
 }
 
 
+# hh:mm:ss to seconds
+
+sub to_sec {
+
+    my ($hh, $mm, $ss,$ms)=split(/:/, shift);
+    return (3600*$hh+60*$mm+$ss+$ms/1000);
+
+
+}
+
+
+# output xml line
+
+sub call_xml {
+    my ($id, $bb_machine, $date, $etime, $callsout, $success, $failed, $retrans, $response_t, $call_lth) = @_;
+
+    return "<?xml version=\"1.0\"?>
+<qstream version=\"1.0\">
+  <flow>
+    <flow_name>$id</flow_name>
+    <date>$date</date>
+    <time>$etime</time>
+    <call_stats>
+      <calls_out>$callsout</calls_out>
+      <calls_ok> $success</calls_ok>
+      <calls_fail>$failed</calls_fail>
+      <calls_retrans>$retrans</calls_retrans>
+      <response_time>$response_t</response_time>
+      <call_secs>$call_lth</call_secs>
+    </call_stats>
+  </flow>
+</qstream>
+";
+   
+}

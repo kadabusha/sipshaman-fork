@@ -1,0 +1,8 @@
+#!/usr/bin/perl
+
+foreach $arg(@ARGV){
+ use XML::Simple;
+ use Data::Dumper;
+ $xml = XMLin($arg, ForceArray => 0 );
+ print Dumper($xml) ;
+}

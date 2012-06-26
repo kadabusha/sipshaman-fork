@@ -12,13 +12,16 @@ fi
     while test 1=1 ; do
 	ps -ef | egrep -q "$BIN/qstream-[s]ipp-check .*-bb $BB_HOST" -
 
-	if test $? = 1 ; then # not found
+	if test $? = 1; then # not found
 
 	    hdir=`date +$DATA/%Y/%m/%d/%H`
 	    cd $hdir
 
-	    lifemin="$((60-`date +%M|sed -e s/^0//`))"  # die at top of hour
-	    $BIN/qstream-sipp-check $* -bb $BB_HOST -f -die $lifemin task.log
+	    if test -s task.log; then # do not start until any data
+		lifemin="$((60-`date +%M|sed -e s/^0//`))"
+		$BIN/qstream-sipp-check $* -v -xml -bb $BB_HOST -f -die $lifemin task.log
+		sleep 3
+	    fi
 	fi
 	sleep 3
     done
