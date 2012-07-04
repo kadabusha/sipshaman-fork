@@ -1,3 +1,19 @@
+sipshaman (0.9-2) unstable; urgency=low
+
+  * Just bounced the rev number. svn version r33.
+
+ -- Jon K Hellan <jon.kare.hellan@uninett.no>  Wed, 04 Jul 2012 15:26:19 +0200
+
+sipshaman (0.9-1) unstable; urgency=low
+
+  * Improved nanny script for sipp-bb sipp-kill-qstream
+  * Added XML output for calls and rtp stream
+  * New utility xmldump
+  * README added and poll.cf.example
+  * svn version r33.
+  
+ -- Jon K Hellan <jon.kare.hellan@uninett.no>  Tue, 26 Jun 2012 15:23:19 +0200
+
 sipshaman (0.8-1) unstable; urgency=low
 
   * Updates, svn version r30
