@@ -36,6 +36,7 @@ our $tz=DateTime::TimeZone->new( name => 'local' );
 
 $tmp="/tmp/qstream-sipp-$$.xml";
 
+my $at_end_of_file=0; # is at end of TASKLOG
 my $endooflife=0;
 
 if ($opt_die){
@@ -62,8 +63,10 @@ foreach $tasklog(@ARGV){
 	    &process_line($line);
 	} else {
 	    last if !$opt_f;
+	    $at_end_of_file=1 if ! $at_end_of_file; # set true at first eof
 	    sleep $timeout;
 	}
+
 	exit(1) if $opt_die && (time > $endoflife); 
 
 
@@ -243,6 +246,7 @@ sub bb_color {
 
 sub bb_report {
     
+    return 0 if $opt_f && ! $at_end_of_file;
     my ($bbtest, $machine, $color, $msg)=@_;
 #    my $cmd="/usr/lib/hobbit/client/bin/bb $bb_host 'status $machine.$bbtest $color $msg\n'>>$ENV{HOME}/cmd.log 2>&1";
     my $cmd="/usr/lib/hobbit/client/bin/bb $bb_host 'status $machine.$bbtest $color $msg\n'";
