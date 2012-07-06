@@ -1,0 +1,8 @@
+#!/bin/bash 
+# restart sipshamn after software upgrade
+# kill nanny and reporting scripts
+# leave ongoing tests with sipp and sipp-test
+#  dangling sipp responder listeners is a potential problem
+
+killall sipp-bb qstream-sipp-check
+killall -q sipp-responder
