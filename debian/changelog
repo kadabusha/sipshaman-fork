@@ -1,3 +1,9 @@
+sipshaman (0.9-3) unstable; urgency=low
+
+  * Added sipp-restart script. svn version r37.
+
+ -- Jon K Hellan <jon.kare.hellan@uninett.no>  Fri, 06 Jul 2012 14:10:14 +0200
+
 sipshaman (0.9-2) unstable; urgency=low
 
   * Just bounced the rev number. svn version r33.

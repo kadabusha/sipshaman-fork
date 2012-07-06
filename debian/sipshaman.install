@@ -4,6 +4,7 @@ bin/sipp-kill-qstream   usr/bin
 bin/sipp-print		usr/bin
 bin/sipp-register	usr/bin
 bin/sipp-responder	usr/bin
+bin/sipp-restart	usr/bin
 bin/sipp-start-bb	usr/bin
 bin/sipp-start-responder	usr/bin
 bin/sipp-test		usr/bin
