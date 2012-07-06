@@ -21,6 +21,12 @@ export IFS=";"
 
 addr=`/sbin/ifconfig eth0| perl -ne 'print $1 if /inet addr:(\d+\.\d+\.\d+\.\d+)/'`
 
+tmp=/tmp/sipshaman-poll.cf$$
+# read poll file atomicly
+while read poll; do
+    echo $poll >> $tmp
+done
+
 while read server service outproxy function machine calls; do
     if test -z "$server"; then
 	continue
@@ -47,7 +53,8 @@ while read server service outproxy function machine calls; do
       mport=$(($mport+4))
       sleep 3
   fi
-done
+done < $tmp
+unlink $tmp
 
 
 
