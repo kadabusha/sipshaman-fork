@@ -1,3 +1,9 @@
+sipshaman (0.9-4) unstable; urgency=low
+
+  * Suppress error status from sipp-restart. svn version r38.
+
+ -- Jon K Hellan <jon.kare.hellan@uninett.no>  Wed, 10 Jul 2012 12:35:14 +0200
+
 sipshaman (0.9-3) unstable; urgency=low
 
   * Added sipp-restart script. svn version r37.

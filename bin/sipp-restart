@@ -6,3 +6,4 @@
 
 killall -q sipp-bb qstream-sipp-check
 killall -q sipp-responder
+exit 0
