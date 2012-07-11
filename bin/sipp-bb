@@ -9,21 +9,32 @@ else
   source /etc/sipshaman/sipshaman.cf
 fi
 
-    while test 1=1 ; do
-	ps -ef | egrep -q "$BIN/qstream-[s]ipp-check .*-bb $BB_HOST" -
+while test 1=1 ; do
+    if test -n $SIP_INTERFACE ; then
+	/sbin/ifconfig | grep -q $SIP_INTERFACE 
+	ifdown=$?
+    else
+	ifdown=0
+    fi
 
-	if test $? = 1; then # not found
+    ps -ef | egrep -q "$BIN/qstream-[s]ipp-check .*-bb $BB_HOST" -
+    progabsent=$?
 
-	    hdir=`date +$DATA/%Y/%m/%d/%H`
+    if test $ifdown -eq 0 ; then #  found
+	if test $progabsent -eq 1 ; then #
+
+	hdir=`date +$DATA/%Y/%m/%d/%H`
+	if test -d $hdir; then
 	    cd $hdir
 
 	    if test -s task.log; then # do not start until any data
 		lifemin="$((60-`date +%M|sed -e s/^0//`))"
 		$BIN/qstream-sipp-check $* -v -xml -bb $BB_HOST -f -die $lifemin task.log
-		sleep 3
 	    fi
 	fi
-	sleep 3
-    done
+        fi
+    fi
+    sleep 3
+done
 
 

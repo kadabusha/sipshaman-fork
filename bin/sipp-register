@@ -10,11 +10,22 @@ else
   source /etc/sipshaman/sipshaman.cf
 fi
 
-registrar=`/sbin/ifconfig eth0| perl -ne 'print $1 if /inet addr:(\d+\.\d+\.\d+\.\d+)/'`
-interf=$registrar
+
+if test .$SIP_INTERFACE != . ; then
+    /sbin/ifconfig | grep -q $SIP_INTERFACE 
+    if test $? -eq 1; then  # not found 
+        exit 0                         ##### exit ######
+    else
+       interf=$SIP_INTERFACE
+    fi
+else
+    interf=`/sbin/ifconfig eth0| perl -ne 'print $1 if /inet addr:(\d+\.\d+\.\d+\.\d+)/'`
+fi
 
 if test .$SIP_PROXY = .; then
   registrar=$SIP_PROXY
+else
+  registrar=$interf
 fi
 
 if test .$1 = .-h; then

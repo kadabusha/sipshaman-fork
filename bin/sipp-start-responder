@@ -9,10 +9,11 @@ if test $# -le 0; then
 fi
 
 for cf in $*; do 
-  source $cf
-  ps axw | grep -q "sh .*/usr/bin/sipp-responde[r].*$cf" -
-  if test $? -eq 1; then # not found and ok to run
-     $BIN/sipp-responder -cf $cf&
-  fi
+    source $cf
+
+    ps axw | grep -q "sh .*/usr/bin/sipp-responde[r].*$cf" -
+    if test $? -eq 1; then # not found and ok to run
+        $BIN/sipp-responder -cf $cf&
+    fi
 
 done

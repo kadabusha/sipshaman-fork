@@ -10,7 +10,7 @@ fi
 
 for cf in $*; do 
   source $cf
-  ps axw | grep -q "sh .*/usr/bin/sipp-b[b].*$cf" -
+  ps axw | egrep -q "sh .*/usr/bin/sipp-b[b].*$cf" -
   if test $? -eq 1; then # not found and ok to run
      $BIN/sipp-bb -cf $cf&
   fi
